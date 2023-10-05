@@ -1,8 +1,7 @@
 import argparse
 from board_2x4hd import Board2x4HD
-from board_ddrc24 import BoardDDRC24
 
-boards = ["2x4HD", "DDRC24"]
+boards = ["2x4HD"]
 controls = ["volume", "mute", "input", "config", "dirac", "gain", "levels"]
 
 
@@ -49,10 +48,7 @@ def main():
 
     # setup the board
     board = None
-    if args.board == "2x4HD":
-        board = Board2x4HD(args.transport)
-    elif args.board == "DDRC24":
-        board = BoardDDRC24(args.transport)
+    board = Board2x4HD(args.transport, 0x2752, 0x0043)
 
     if args.action == "get":
         if args.control == "volume":

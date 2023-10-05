@@ -1,4 +1,4 @@
-import struct
+from struct import unpack, pack
 from transport_echo import *
 from transport_usbhid import *
 
@@ -10,24 +10,20 @@ from transport_usbhid import *
 class Board2x4HD:
     """Commands for 2x4HD"""
 
-    def __init__(self, transport):
+    def __init__(self, transport, vid, pid):
         if transport == "usbhid":
-            self._transport = TransportUSBHID(0x2752, 0x0043)
+            self._transport = TransportUSBHID(vid, pid)
         elif transport == "echo":
             self._transport = TransportEcho()
         else:
             raise RuntimeError(
                 "Provided transport " + transport + " is not a valid option"
             )
+        self.master_status = {}
 
-    def _masterStatus(self):
-        print("START MASTER STATUS")
-        status = {}
+    def set_master_status(self):
         # Send master status check command
         resp = self._transport.write([0x05, 0xFF, 0xDA, 0x02])
-        print(f"returned from response: {resp[:3]}")
-        # sometimes we get back other stuff from the card, and have to get past them
-        # before we can get what we want...
 
         for _ in range(10):
             # some known values that often come back are
@@ -35,7 +31,7 @@ class Board2x4HD:
             # d9 is switching source; 02 is for example the usb input, so might as well process those
             if resp and (len(resp) > 2) and resp[2] == "0xd9":
                 # throw it in just to be nice so we don't have to do it later
-                status["source"] = ["analog", "toslink", "usb"][resp[3]]
+                self.status["source"] = ["analog", "toslink", "usb"][resp[3]]
 
             resp = self._transport.write([0x05, 0xFF, 0xDA, 0x02])
             if resp[:3] == b"\x05\xff\xda":
@@ -51,40 +47,38 @@ class Board2x4HD:
             raise RuntimeError(
                 "Received unexpected response: bad mute value " + str(resp)
             )
-        status["volume"] = resp[3] * -0.5
-        status["mute"] = resp[4] == 0x01
+        self.status["volume"] = resp[3] * -0.5
+        self.status["mute"] = resp[4] == 0x01
         # add status
-        if "source" not in status:
-            status["source"] = self.getInputSource()
-
-        return status
+        if "source" not in self.status:
+            self.status["source"] = self.getInputSource()
 
     def getMute(self):
         # Get mute from master status
-        return self._masterStatus()["mute"]
+        return self.master_status["mute"]  # <-- refresh master_status manualy
 
     def setMute(self, mute):
         # Send mute command
         self._transport.write([0x17, 0x01 if mute else 0x00])
 
     def getVolume(self):
-        print("START VOLUME")
         # Get volume from master status
-        return self._masterStatus()["volume"]
+        return self.master_status["volume"]  # <-- refresh master_status manualy
 
     def setVolume(self, volume):
         # Integrity check
         if (volume > 0) or (volume < -127.5):
             raise RuntimeError("Volume out of bounds. Range: -127.5 to 0 (db)")
         # Send volume command
-        self._transport.write([0x42, round(-2 * volume)])
+        self._transport.write(
+            [0x42, round(-2 * volume)]
+        )  # TODO: round might cause issue (needs to be more specific)
 
     def getInputSource(self):
         # Send input source check command
         resp = self._transport.write([0x05, 0xFF, 0xD9, 0x01])
 
         for _ in range(10):
-            # could log what we DO get back here, but don't have a place to do that right now...
             resp = self._transport.write([0x05, 0xFF, 0xD9, 0x01])
             if resp[:3] == b"\x05\xff\xd9":
                 break
@@ -99,6 +93,7 @@ class Board2x4HD:
             raise RuntimeError(
                 "Received unexpected response: bad source value " + str(resp)
             )
+
         # Return the source string
         sources = ["analog", "toslink", "usb"]
         return sources[resp[4]]
@@ -107,6 +102,7 @@ class Board2x4HD:
         # Integrity check
         if not (source in ["analog", "toslink", "usb"]):
             raise RuntimeError("Invalid input source provided")
+
         # Send input change command
         sources = {"analog": 0x00, "toslink": 0x01, "usb": 0x02}
         self._transport.write([0x34, sources[source]])
@@ -128,6 +124,8 @@ class Board2x4HD:
             raise RuntimeError("Config index out of range (should be 1-4)")
         # Send the config change command
         self._transport.write([0x25, config - 1, 0x02])
+
+        # TODO: Test if works without these lines of code, might be important for internal dsp program
         self._transport.write([0x05, 0xFF, 0xE5, 0x01])
         self._transport.write([0x05, 0xFF, 0xE0, 0x01])
         self._transport.write([0x05, 0xFF, 0xDA, 0x02])
@@ -135,8 +133,7 @@ class Board2x4HD:
     def getLevels(self):
         # get input levels on the DSP right now.
         # adapted from https://github.com/mrene/node-minidsp/
-        command = [0x14, 0x00, 0x44, 0x02]
-        resp = self._transport.write(command)
+        resp = self._transport.write([0x14, 0x00, 0x44, 0x02])
         # Validity checking
         if resp[:3] != [0x14, 0x00, 0x44]:
             raise RuntimeError("Received unexpected response: " + str(resp))
@@ -144,7 +141,7 @@ class Board2x4HD:
         # at index 3-7 and 8-11 inclusive; so unpack two nums...
         # no rounding or anything, so if sending down a json wire or something
         # you might want to trim
-        return struct.unpack("<ff", bytes(resp[3:11]))
+        return unpack("<ff", bytes(resp[3:11]))
 
     def _setInputGain(self, input=0, gain=0):
         # input either 0 or 1; gain from -127.5 to +12
@@ -159,7 +156,7 @@ class Board2x4HD:
 
         # pack the gain value into a little-endian 32bit bytes string
         # and add those 4 bytes to the command
-        command += list(struct.pack("<f", gain))
+        command += list(pack("<f", gain))
 
         resp = self._transport.write(command)
         return resp

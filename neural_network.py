@@ -14,13 +14,13 @@ cuda_available = torch.cuda.is_available()
 # Use gpu if present on current device
 device = torch.device("cuda" if cuda_available else "cpu")
 
-# Number of episodes is the same as epochs TODO: Change variable if needed (for overfitting)
+# Number of episodes is the same as epochs TODO: Change variable if needed (for overfitting) (Depends on testroom)
 if cuda_available:
     N_EPISODES = 600
 else:
     N_EPISODES = 50
 
-# TODO: Decide actual number
+# TODO: Decide actual number (is equal to audio fragment)
 N_STEPS = 1000
 
 # TODO: next_state might not be needed here
@@ -72,7 +72,7 @@ LR = 1e-4
 # TODO: Make a program to get states and perform actions
 # Get number of actions that the network can take (output is five numbers from 0 - 1)
 N_ACTIONS = 5
-# Get the number of state observations (inputs for the network)
+# Get the number of state observations (inputs for the network) TODO: don't set state to None
 state, info = None
 N_OBSERVATIONS = len(state)
 
@@ -85,7 +85,7 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-def select_action(state, step):
+def select_action(state, step: int):
     # Use eps_threshold to have a good balance between exploration and exploitation
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1.0 * step / EPS_DECAY)
@@ -101,7 +101,7 @@ def select_action(state, step):
         return torch.tensor([[...]], device=device, dtype=torch.long)
 
 
-def optimize_model():
+def optimize_model() -> None:
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
@@ -131,7 +131,7 @@ def optimize_model():
     optimizer.step()
 
 
-def train_loop(state):
+def train_loop():
     # TODO: transform some inputs to tensors
     for episode in range(N_EPISODES):
         # Reset the state (pause, so there are no echoes anymore)

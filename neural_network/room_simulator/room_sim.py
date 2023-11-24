@@ -1,21 +1,27 @@
 import pyroomacoustics as pra
 from scipy.io import wavfile
+from collections import namedtuple
+
+
+# Create named tuple
+room_materials = namedtuple("ceiling", "floor", "north", "east", "south", "west")
 
 
 class AcousticRoom:
-    def __init__(self, room_dim, reverb, materials, audi_path) -> None:
-        self.room_dim = room_dim
-        self.reverbaration_time = reverb
+    def __init__(self, room_data) -> None:
+        """Deleted reverb for now, might need later"""
+        self.room_dim = room_data[2][1]
+        materials = room_materials(material for material in room_data[2][3])
         self.material = pra.make_materials(
             ceiling=materials.ceiling,
             floor=materials.floor,
-            east=materials.east,
-            west=materials.west,
             north=materials.north,
+            east=materials.east,
             south=materials.south,
+            west=materials.west,
         )
         self.max_order = 1  # TODO: Is default
-        self.fs, self.audio = wavfile.read(audi_path)
+        self.fs, self.audio = wavfile.read(room_data[0])
 
         # Creating a room
         self.room = pra.ShoeBox(
@@ -36,3 +42,6 @@ class AcousticRoom:
     def add_mics(self, positions) -> None:
         # Positions must be following size: (dim, n_mics)
         self.room.add_microphone_array(positions)
+
+    def adjust_master_volume(self, master_percentage):
+        self.audio *= master_percentage / 100

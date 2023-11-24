@@ -1,30 +1,14 @@
 import math
 import random
-import matplotlib
-import matplotlib.pyplot as plt
 from collections import namedtuple, deque
+import csv
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-cuda_available = torch.cuda.is_available()
-
-# Use gpu if present on current device
-device = torch.device("cuda" if cuda_available else "cpu")
-
-# Number of episodes is the same as epochs TODO: Change variable if needed (for overfitting) (Depends on testroom)
-if cuda_available:
-    N_EPISODES = 600
-else:
-    N_EPISODES = 50
-
-# TODO: Decide actual number (is equal to audio fragment)
-N_STEPS = 1000
-
-# TODO: next_state might not be needed here
-Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
+from room_simulator.room_sim import AcousticRoom
 
 
 class ReplayMemory(object):
@@ -56,6 +40,14 @@ class DQN(nn.Module):
         return x
 
 
+# Use gpu if present on current device
+cuda_available = torch.cuda.is_available()
+device = torch.device("cuda" if cuda_available else "cpu")
+
+# TODO: next_state might not be needed here
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
+
+
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
 # EPS_START is the starting value of epsilon
 # EPS_END is the final value of epsilon
@@ -71,13 +63,13 @@ LR = 1e-4
 
 # TODO: Make a program to get states and perform actions
 # Get number of actions that the network can take (output is five numbers from 0 - 1)
-N_ACTIONS = 5
+N_OUPUTS = 5
 # Get the number of state observations (inputs for the network) TODO: don't set state to None
 state, info = None
 N_OBSERVATIONS = len(state)
 
-policy_net = DQN(N_OBSERVATIONS, N_ACTIONS).to(device)
-target_net = DQN(N_OBSERVATIONS, N_ACTIONS).to(device)
+policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
+target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
 # TODO: Why this optimizer?
@@ -131,15 +123,34 @@ def optimize_model() -> None:
     optimizer.step()
 
 
-def train_loop():
-    # TODO: transform some inputs to tensors
-    for episode in range(N_EPISODES):
-        # Reset the state (pause, so there are no echoes anymore)
-        # Get state
-        for step in N_STEPS:
-            # Take step and collect observation room (new state), reward,
-            # termination (not applicable) and truncated.
+def get_train_data(file_path: str) -> list:
+    with open(file_path, mode="r") as file:
+        csv_file = csv.reader(file)
+        return (csv_file, len(csv_file))
 
-            total_steps = episode * step
-            action = select_action(state, total_steps)
-            new_state, reward, truncated = take_step(action)  # One step is...
+
+def train_loop():
+    """
+    One episode will be a sound played in a unique room
+    There are no individual steps, since it is not possible
+    to stop in the middle of a sound. For training during the
+    room simulation each audio fragment (one step) will be inputted
+    into the NN this audio will be adjusted for each speaker.
+    Before the audio is put trough the NN it will be adjusted
+    to the master volume.
+    """
+
+    # Get episode data from train data file
+    data, data_length = get_train_data("train_data_input.csv")
+
+    # Number of episodes is determinded from test data input file
+    for episode in range(data_length):
+        room = AcousticRoom(episode)
+
+
+def config_loop():
+    """
+    Use when training/configuring in a real room
+    Incase of a real room, no plan like with room
+    simulation
+    """

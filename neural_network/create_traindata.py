@@ -6,7 +6,7 @@ import csv
 # speaker2_loc, speaker3_loc, speaker4_loc, speaker5_loc
 test_case = [
     [
-        "../assets/guiter_16k.wav",
+        "../assets/guitar_16k.wav",
         50,
         [
             (2, 2, 2),

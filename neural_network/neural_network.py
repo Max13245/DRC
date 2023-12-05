@@ -65,8 +65,8 @@ LR = 1e-4
 # Get number of actions that the network can take (output is five numbers from 0 - 1)
 N_OUPUTS = 5
 # Get the number of state observations (inputs for the network) TODO: don't set state to None
-state, info = None
-N_OBSERVATIONS = len(state)
+state, info = None, None
+N_OBSERVATIONS = 4  # len(state)
 
 policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
@@ -126,7 +126,26 @@ def optimize_model() -> None:
 def get_train_data(file_path: str) -> list:
     with open(file_path, mode="r") as file:
         csv_file = csv.reader(file)
-        return (csv_file, len(csv_file))
+        for row in csv_file:
+            yield row
+
+
+def format_static_state(room, reflection_levels):
+    """
+    Inputs of the Neural Network are:
+    1. Frequency, Dynamic
+    2. Amplitude, Dynamic
+    3. Location speakers (Optional, but way better), Static
+    4. Location mic (Optional, but way better), Static
+    5. Room measurements (Optional, a bit better, since relfection also takes care of this a bit), Static
+    6. Reflection level (For each speaker?) with sweeptonetest, Static
+    """
+
+    speaker_positions = [
+        dim for dim in [position for position in room.speaker_positions]
+    ]
+    mic_positions = [dim for dim in room.mic_position]
+    return speaker_positions + mic_positions + reflection_levels
 
 
 def train_loop():
@@ -141,11 +160,22 @@ def train_loop():
     """
 
     # Get episode data from train data file
-    data, data_length = get_train_data("train_data_input.csv")
+    data = get_train_data("./neural_network/train_data_input.csv")
 
     # Number of episodes is determinded from test data input file
-    for episode in range(data_length):
+    for n_episode, episode in enumerate(data):
         room = AcousticRoom(episode)
+
+        # Get inputs that don't change during current episode
+        # formatted_input = format_static_state(room)
+
+        # Sample the audio
+        room.get_fft_audio()
+
+        # speaker_audio = select_action(formatted_input, n_episode)
+
+        # TODO: Not right input, it is missing the audio's
+        # room.add_speakers(episode[2][2])
 
 
 def config_loop():
@@ -154,3 +184,6 @@ def config_loop():
     Incase of a real room, no plan like with room
     simulation
     """
+
+
+train_loop()

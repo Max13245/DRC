@@ -61,9 +61,22 @@ class AcousticRoom:
 
     def adjust_to_master_volume(self, master_percentage):
         # TODO: The amplitude seems to be unlineair so, account for that
-        return self.audio
         master_factor = master_percentage / 100
         return (self.audio * master_factor).astype("int16")
+
+    def get_normalized_fft(self, fft_sample):
+        return fft_sample / len(fft_sample)
+
+    def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
+        if normalized:
+            normalized_fft = self.get_normalized_fft(fft_amplitudes)
+            plt.plot(frequencies, np.abs(normalized_fft))
+        else:
+            plt.plot(frequencies, np.abs(fft_amplitudes))
+
+        plt.xlabel("Frequency")
+        plt.ylabel("Amplitude")
+        plt.show()
 
     def get_fft_audio(self):
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
@@ -84,18 +97,10 @@ class AcousticRoom:
 
         return fft_samples
 
-    def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
-        if normalized:
-            plt.plot(frequencies, np.abs(self.get_normalized_fft(fft_amplitudes)))
-        else:
-            plt.plot(frequencies, np.abs(fft_amplitudes))
+    def get_ifft_audio(self, fft_amplitudes):
+        # Compute the inverse of the (altered) fft for every sample
+        reconstructed_wave = [np.fft.ifft(amplitude) for amplitude in fft_amplitudes]
 
-        plt.xlabel("Frequency")
-        plt.ylabel("Amplitude")
-        plt.show()
-
-    def get_normalized_fft(self, fft_sample):
-        return fft_sample / len(fft_sample)
-
-    def get_desampled_audio(self):
-        pass
+        # Flatten the list from 2d to 1d
+        concat_reconst_wave = np.concatenate(reconstructed_wave)
+        return concat_reconst_wave

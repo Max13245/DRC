@@ -173,7 +173,10 @@ def train_loop():
         fft_samples = room.get_fft_audio()
 
         sample_num = 200
-        room.plot_fft_sample(fft_samples[sample_num][0], fft_samples[sample_num][1])
+        # room.plot_fft_sample(fft_samples[sample_num][0], fft_samples[sample_num][1])
+
+        fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
+        reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
 
         # speaker_audio = select_action(formatted_input, n_episode)
 

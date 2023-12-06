@@ -178,6 +178,9 @@ def train_loop():
         fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
         reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
 
+        room.plot_audio(room.master_audio)
+        room.plot_audio(reconstructed_wave)
+
         # speaker_audio = select_action(formatted_input, n_episode)
 
         # TODO: Not right input, it is missing the audio's

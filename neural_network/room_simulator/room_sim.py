@@ -78,6 +78,12 @@ class AcousticRoom:
         plt.ylabel("Amplitude")
         plt.show()
 
+    def plot_audio(self, audio):
+        plt.plot(range(0, len(audio)), audio)
+        plt.xlabel("Time")
+        plt.ylabel("Amplitude")
+        plt.show()
+
     def get_fft_audio(self):
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(
@@ -99,6 +105,7 @@ class AcousticRoom:
 
     def get_ifft_audio(self, fft_amplitudes):
         # Compute the inverse of the (altered) fft for every sample
+        # Use absolute to get only the amplitude
         reconstructed_wave = [np.fft.ifft(amplitude) for amplitude in fft_amplitudes]
 
         # Flatten the list from 2d to 1d

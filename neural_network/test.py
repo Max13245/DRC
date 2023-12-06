@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 # Parameters
 duration = 1.0  # Duration in seconds
@@ -23,8 +24,15 @@ fft_result = np.fft.fft(combined_wave)
 # Get the corresponding frequencies
 freqs = np.fft.fftfreq(len(combined_wave), d=1 / sample_rate)
 
-print(len(t))
-print(len(combined_wave))
+counter = 0
+for result in np.abs(fft_result):
+    if result < 1e-8:
+        counter += 1
+    else:
+        print(result)
+
+print(counter)
+print("Difference: " + str(sample_rate - counter))
 
 # Plot the combined wave
 plt.subplot(4, 1, 1)

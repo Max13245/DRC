@@ -2,6 +2,7 @@ import pyroomacoustics as pra
 from scipy.io import wavfile
 from collections import namedtuple
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Create named tuple
@@ -65,16 +66,22 @@ class AcousticRoom:
 
     def get_fft_audio(self):
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
-        # TODO: Deside if sampling is better for quality
-        # samples = np.array_split(self.master_audio, len(self.master_audio) / self.fs)
+        samples = np.array_split(
+            self.master_audio, len(self.master_audio) / (self.fs / 100)
+        )
 
-        # Compute the FFT
-        fft_result = np.fft.fft(self.master_audio)
+        fft_samples = []
+        for sample in samples:
+            # Compute the FFT
+            fft_result = np.fft.fft(sample)
 
-        # Each FFT element corresponds with all frequencies
-        # So there are fft_result length * freqs length number of waves
-        freqs = np.fft.fftfreq(len(self.master_audio), d=1 / self.fs)
-        return (fft_result, freqs)
+            # Each FFT element corresponds with all frequencies
+            # So there are fft_result length * freqs length number of waves
+            freqs = np.fft.fftfreq(len(sample), d=1 / self.fs)
+
+            fft_samples.append((freqs, fft_result))
+
+        return fft_samples
 
     def get_desampled_audio(self):
         pass

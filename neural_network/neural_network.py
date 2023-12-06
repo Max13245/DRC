@@ -170,7 +170,7 @@ def train_loop():
         # formatted_input = format_static_state(room)
 
         # Sample the audio
-        room.get_fft_audio()
+        fft_samples = room.get_fft_audio()
 
         # speaker_audio = select_action(formatted_input, n_episode)
 

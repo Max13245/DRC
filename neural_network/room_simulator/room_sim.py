@@ -61,6 +61,7 @@ class AcousticRoom:
 
     def adjust_to_master_volume(self, master_percentage):
         # TODO: The amplitude seems to be unlineair so, account for that
+        return self.audio
         master_factor = master_percentage / 100
         return (self.audio * master_factor).astype("int16")
 
@@ -82,6 +83,19 @@ class AcousticRoom:
             fft_samples.append((freqs, fft_result))
 
         return fft_samples
+
+    def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
+        if normalized:
+            plt.plot(frequencies, np.abs(self.get_normalized_fft(fft_amplitudes)))
+        else:
+            plt.plot(frequencies, np.abs(fft_amplitudes))
+
+        plt.xlabel("Frequency")
+        plt.ylabel("Amplitude")
+        plt.show()
+
+    def get_normalized_fft(self, fft_sample):
+        return fft_sample / len(fft_sample)
 
     def get_desampled_audio(self):
         pass

@@ -87,10 +87,10 @@ def select_action(state, step: int):
             # since there is an infinite number of actions (Makes it hard
             # to choose :))
             # Don't choose (maybe change the randomness aswell)
-            return policy_net(state).max(1)[1].view(1, 1)
+            return policy_net(state)
     else:
-        # TODO: Choose a random action
-        return torch.tensor([[...]], device=device, dtype=torch.long)
+        # Random action (five random numbers between 0 and 1)
+        return [random.uniform(0, 1)]
 
 
 def optimize_model() -> None:
@@ -171,6 +171,9 @@ def train_loop():
 
         # Sample the audio
         fft_samples = room.get_fft_audio()
+
+        sample_num = 200
+        room.plot_fft_sample(fft_samples[sample_num][0], fft_samples[sample_num][1])
 
         # speaker_audio = select_action(formatted_input, n_episode)
 

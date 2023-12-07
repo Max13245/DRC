@@ -106,12 +106,7 @@ class AcousticRoom:
             # So there are fft_result length * freqs length number of waves
             freqs = np.fft.fftfreq(len(sample), d=1 / self.fs)
 
-            # Get the real value (non negative)
-            positive_freq_mask = freqs >= 0
-            fft_result_positive = fft_result[positive_freq_mask]
-            freqs_positive = freqs[positive_freq_mask]
-
-            fft_samples.append((freqs_positive, fft_result_positive))
+            fft_samples.append((freqs, fft_result))
 
         return fft_samples
 

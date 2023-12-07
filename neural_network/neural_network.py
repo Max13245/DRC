@@ -131,7 +131,7 @@ def get_train_data(file_path: str) -> list:
             yield row
 
 
-def format_static_state(room, reflection_levels):
+def format_static_state(room, reflection_levels: int) -> list:
     """
     Inputs of the Neural Network are:
     1. Frequency, Dynamic

@@ -63,25 +63,17 @@ class AcousticRoom:
         # Positions must be following size: (dim, n_mics)
         self.room.add_microphone_array(positions)
 
-    def adjust_to_master_volume(self, master_percentage):
+    def adjust_to_master_volume(self, master_percentage: int) -> list:
         # TODO: The amplitude seems to be unlineair so, account for that
         master_factor = master_percentage / 100
         return (self.audio * master_factor).astype("int16")
 
-    def get_normalized_fft(self, fft_sample):
+    def get_normalized_fft(self, fft_sample: np.array) -> np.array:
         return fft_sample / len(fft_sample)
 
-    def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
-        """for frequency in frequencies:
-            print(frequency)
-            time.sleep(0.001)
-        print("\n")
-
-        for amplitude in fft_amplitudes:
-            print(amplitude)
-            time.sleep(0.001)
-
-        print("\n")"""
+    def plot_fft_sample(
+        self, frequencies: np.array, fft_amplitudes: np.array, normalized=True
+    ) -> None:
         if normalized:
             normalized_fft = self.get_normalized_fft(fft_amplitudes)
             plt.plot(
@@ -98,13 +90,13 @@ class AcousticRoom:
         plt.ylabel("Amplitude")
         plt.show()
 
-    def plot_audio(self, audio):
+    def plot_audio(self, audio: np.array) -> None:
         plt.plot(range(0, len(audio)), audio)
         plt.xlabel("Time")
         plt.ylabel("Amplitude")
         plt.show()
 
-    def get_fft_audio(self):
+    def get_fft_audio(self) -> list:
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(
             self.master_audio, len(self.master_audio) / (self.fs / 100)
@@ -123,7 +115,7 @@ class AcousticRoom:
 
         return fft_samples
 
-    def get_ifft_audio(self, fft_amplitudes):
+    def get_ifft_audio(self, fft_amplitudes: list) -> np.array:
         # Compute the inverse of the (altered) fft for every sample
         # Use absolute to get only the amplitude
         reconstructed_wave = [np.fft.ifft(amplitude) for amplitude in fft_amplitudes]

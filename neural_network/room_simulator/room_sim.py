@@ -3,6 +3,7 @@ from scipy.io import wavfile
 from collections import namedtuple
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 # Create named tuple
@@ -70,9 +71,15 @@ class AcousticRoom:
     def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
         if normalized:
             normalized_fft = self.get_normalized_fft(fft_amplitudes)
-            plt.plot(frequencies, np.abs(normalized_fft))
+            plt.plot(
+                frequencies[1 : len(frequencies)],
+                np.abs(normalized_fft)[1 : len(normalized_fft)],
+            )
         else:
-            plt.plot(frequencies, np.abs(fft_amplitudes))
+            plt.plot(
+                frequencies[1 : len(frequencies)],
+                np.abs(fft_amplitudes)[1 : len(fft_amplitudes)],
+            )
 
         plt.xlabel("Frequency")
         plt.ylabel("Amplitude")
@@ -99,7 +106,12 @@ class AcousticRoom:
             # So there are fft_result length * freqs length number of waves
             freqs = np.fft.fftfreq(len(sample), d=1 / self.fs)
 
-            fft_samples.append((freqs, fft_result))
+            # Get the real value (non negative)
+            positive_freq_mask = freqs >= 0
+            fft_result_positive = fft_result[positive_freq_mask]
+            freqs_positive = freqs[positive_freq_mask]
+
+            fft_samples.append((freqs_positive, fft_result_positive))
 
         return fft_samples
 

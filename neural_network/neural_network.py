@@ -2,6 +2,7 @@ import math
 import random
 from collections import namedtuple, deque
 import csv
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -172,14 +173,20 @@ def train_loop():
         # Sample the audio
         fft_samples = room.get_fft_audio()
 
-        sample_num = 200
-        room.plot_fft_sample(fft_samples[sample_num][0], fft_samples[sample_num][1])
+        sample_num = 205
+        room.plot_fft_sample(
+            fft_samples[sample_num][0], fft_samples[sample_num][1], normalized=False
+        )
 
         fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
         reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
 
-        room.plot_audio(room.master_audio)
-        room.plot_audio(reconstructed_wave)
+        # room.plot_audio(room.master_audio)
+        # room.plot_audio(reconstructed_wave)
+
+        indices = room.get_significant_waves(fft_samples[sample_num][1])
+        for indx in indices:
+            print(np.abs(fft_samples[sample_num][1][indx]))
 
         # speaker_audio = select_action(formatted_input, n_episode)
 

@@ -48,6 +48,9 @@ class AcousticRoom:
             air_absorption=True,
         )
 
+        # Threshold for significant peaks
+        self.threshold = 80
+
     def add_speakers(self, speaker_props) -> None:
         for speaker in speaker_props:
             # speaker[0] is the location of the speaker and speaker[1] is the audio for that speaker
@@ -69,6 +72,16 @@ class AcousticRoom:
         return fft_sample / len(fft_sample)
 
     def plot_fft_sample(self, frequencies, fft_amplitudes, normalized=True):
+        """for frequency in frequencies:
+            print(frequency)
+            time.sleep(0.001)
+        print("\n")
+
+        for amplitude in fft_amplitudes:
+            print(amplitude)
+            time.sleep(0.001)
+
+        print("\n")"""
         if normalized:
             normalized_fft = self.get_normalized_fft(fft_amplitudes)
             plt.plot(
@@ -118,3 +131,20 @@ class AcousticRoom:
         # Flatten the list from 2d to 1d
         concat_reconst_wave = np.concatenate(reconstructed_wave)
         return concat_reconst_wave
+
+    def get_significant_waves(self, amplitudes_sample):
+        """Get the highest amplitude peaks with there frequency"""
+        amplitudes_sample = np.delete(amplitudes_sample, 0)
+
+        # Transform to absolute amplitudes
+        amplitudes_sample = np.abs(amplitudes_sample)
+        max_value = amplitudes_sample.max()
+        division_factor = max_value / 100
+
+        # Add one to index, because 0 peak was deleted above
+        indices = [
+            indx + 1
+            for indx, amplitude in enumerate(amplitudes_sample)
+            if amplitude / division_factor >= self.threshold
+        ]
+        return indices

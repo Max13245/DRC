@@ -48,6 +48,11 @@ class AcousticRoom:
             air_absorption=True,
         )
 
+        # Use RT20 to get reflection levels
+        self.init_RT20_sounds()
+        self.reflection_levels = np.array([])
+        self.RT20_reflection_test(eval(room_data[2])[2], eval(room_data[2])[0])
+
         # Threshold for significant peaks
         self.threshold = 80
 
@@ -140,3 +145,43 @@ class AcousticRoom:
             if amplitude / division_factor >= self.threshold
         ]
         return indices
+
+    def get_single_stream(self, dubble_stream):
+        single_stream = [pair[0] for pair in dubble_stream]
+        return single_stream
+
+    def init_RT20_sounds(self) -> None:
+        _, pink_noise_100 = wavfile.read("./neural_network/assets/Pink-noise-100Hz.wav")
+        _, pink_noise_1000 = wavfile.read(
+            "./neural_network/assets/Pink-noise-1000Hz.wav"
+        )
+        _, pink_noise_12500 = wavfile.read(
+            "./neural_network/assets/Pink-noise-12500Hz.wav"
+        )
+        single_pink_noise_100 = self.get_single_stream(pink_noise_100)
+        single_pink_noise_1000 = self.get_single_stream(pink_noise_1000)
+        single_pink_noise_12500 = self.get_single_stream(pink_noise_12500)
+        self.RT20_sounds = np.array(
+            [single_pink_noise_100, single_pink_noise_1000, single_pink_noise_12500]
+        )
+
+    def RT20_reflection_test(self, speaker_positions, mic_position):
+        # Test for every speaker and do 2 sweeptones (different sounds) of ... octave
+        for position in speaker_positions:
+            for sound in self.RT20_sounds:
+                # Create a temporary sound source to get the reflection level for that speaker
+                sound_source = pra.SoundSource(position, signal=sound, delay=0)
+                self.room.add_source(sound_source)
+
+                # Temporary mic
+                self.room.add_microphone(mic_position, fs=self.fs)
+
+                self.room.simulate()
+
+                # Get the rt20 and add to the reflection array
+                RT20 = self.room.measure_rt60(decay_db=20)
+                self.reflection_levels = np.append(self.reflection_levels, RT20[0])
+
+                # Remove source and mic, because temporary
+                self.room.sources.remove(sound_source)
+                self.room.mic_array = None

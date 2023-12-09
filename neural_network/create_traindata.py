@@ -6,12 +6,12 @@ import csv
 # speaker2_loc, speaker3_loc, speaker4_loc, speaker5_loc
 test_case = [
     [
-        "../assets/guitar_16k.wav",
+        "./neural_network/assets/guitar_16k.wav",
         50,
         [
             (2, 2, 2),
-            (10, 8, 6),
-            [(1, 1, 1), (9, 9, 1), (4, 6, 2), (4, 10, 4), (5, 5, 5)],
+            (10, 16, 8),
+            [(3, 10, 1), (2, 5, 3), (4, 11, 2), (9, 13, 2), (10, 12, 6)],
             [
                 "brickwork",
                 "brickwork",

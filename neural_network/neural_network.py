@@ -80,14 +80,10 @@ memory = ReplayMemory(10000)
 
 def select_action(state, step: int):
     # Use eps_threshold to have a good balance between exploration and exploitation
-    sample = random.random()
+    random_balance = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1.0 * step / EPS_DECAY)
-    if sample > eps_threshold:
+    if random_balance > eps_threshold:
         with torch.no_grad():
-            # TODO: This chooses one action, not needed in this program,
-            # since there is an infinite number of actions (Makes it hard
-            # to choose :))
-            # Don't choose (maybe change the randomness aswell)
             return policy_net(state)
     else:
         # Random action (five random numbers between 0 and 1)
@@ -131,7 +127,7 @@ def get_train_data(file_path: str) -> list:
             yield row
 
 
-def format_static_state(room, reflection_levels: int) -> list:
+def format_static_state(room: AcousticRoom) -> list:
     """
     Inputs of the Neural Network are:
     1. Frequency, Dynamic
@@ -146,7 +142,7 @@ def format_static_state(room, reflection_levels: int) -> list:
         dim for dim in [position for position in room.speaker_positions]
     ]
     mic_positions = [dim for dim in room.mic_position]
-    return speaker_positions + mic_positions + reflection_levels
+    return speaker_positions + mic_positions + room.reflection_levels
 
 
 def train_loop():
@@ -168,7 +164,7 @@ def train_loop():
         room = AcousticRoom(episode)
 
         # Get inputs that don't change during current episode
-        # formatted_input = format_static_state(room)
+        static_input = format_static_state(room)
 
         # Sample the audio
         fft_samples = room.get_fft_audio()

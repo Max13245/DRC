@@ -67,7 +67,7 @@ LR = 1e-4
 N_OUPUTS = 5
 # Get the number of state observations (inputs for the network) TODO: don't set state to None
 state, info = None, None
-N_OBSERVATIONS = 4  # len(state)
+N_OBSERVATIONS = 35  # len(state)
 
 policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
@@ -87,7 +87,7 @@ def select_action(state, step: int):
             return policy_net(state)
     else:
         # Random action (five random numbers between 0 and 1)
-        return [random.uniform(0, 1)]
+        return [random.uniform(0, 1) for _ in range(0, 5)]
 
 
 def optimize_model() -> None:
@@ -137,12 +137,8 @@ def format_static_state(room: AcousticRoom) -> list:
     5. Room measurements (Optional, a bit better, since relfection also takes care of this a bit), Static
     6. Reflection level (For each speaker?) with sweeptonetest, Static
     """
-
-    speaker_positions = [
-        dim for dim in [position for position in room.speaker_positions]
-    ]
-    mic_positions = [dim for dim in room.mic_position]
-    return speaker_positions + mic_positions + room.reflection_levels
+    speaker_positions = [dim for position in room.speaker_positions for dim in position]
+    return speaker_positions + list(room.mic_position) + list(room.reflection_levels)
 
 
 def train_loop():
@@ -168,26 +164,54 @@ def train_loop():
 
         # Sample the audio
         fft_samples = room.get_fft_audio()
-
-        sample_num = 205
-        room.plot_fft_sample(
+        sample_num = 400
+        """room.plot_fft_sample(
             fft_samples[sample_num][0], fft_samples[sample_num][1], normalized=False
-        )
+        )"""
+
+        indices = room.get_significant_waves(fft_samples[sample_num][1])
+
+        # Itterate through first half/positive half
+        """for indx in indices[0 : int(len(indices) / 2)]:
+            print(np.abs(fft_samples[sample_num][1][indx]))
+            print(fft_samples[sample_num][0][indx])"""
+
+        speaker_audios = [[] for _ in range(5)]
+        for sample_indx, sample in enumerate(fft_samples):
+            # Get the peaks of the sepparated waves
+            indices = room.get_significant_waves(sample[1])
+
+            # Multiply sample in 5 different streams for five different speakers
+            for indx in range(0, len(speaker_audios)):
+                speaker_audios[indx].append(sample[1])
+
+            for peak_index in indices:
+                # Create a state for the neural network
+                # Don't normalize fft input, original fft needed for ifft
+                frequency = sample[0][peak_index]
+                amplitude = np.abs(sample[1][peak_index])
+                formatted_input = static_input + [frequency, amplitude]
+                tensor_input = torch.FloatTensor(formatted_input)
+
+                # Get scalers for the peaks for each speaker
+                scalers = select_action(tensor_input, n_episode)
+
+                # Loop over speakers, to multiply peaks with scalers
+                for speaker_indx in range(0, len(speaker_audios)):
+                    speaker_audios[speaker_indx][sample_indx][peak_index] *= scalers[
+                        speaker_indx
+                    ]
+
+        # speaker_audio = select_action(formatted_input, n_episode)
+
+        # TODO: Not right input, it is missing the audio's
+        # room.add_speakers(episode[2][2])
 
         fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
         reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
 
         # room.plot_audio(room.master_audio)
         # room.plot_audio(reconstructed_wave)
-
-        indices = room.get_significant_waves(fft_samples[sample_num][1])
-        for indx in indices:
-            print(np.abs(fft_samples[sample_num][1][indx]))
-
-        # speaker_audio = select_action(formatted_input, n_episode)
-
-        # TODO: Not right input, it is missing the audio's
-        # room.add_speakers(episode[2][2])
 
 
 def config_loop():

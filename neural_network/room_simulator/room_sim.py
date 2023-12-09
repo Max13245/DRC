@@ -16,8 +16,8 @@ class AcousticRoom:
     def __init__(self, room_data) -> None:
         """Deleted reverb for now, might need later"""
         self.room_dim = eval(room_data[2])[1]
-        self.speaker_positions = room_data[2][2]
-        self.mic_position = room_data[2][0]
+        self.speaker_positions = eval(room_data[2])[2]
+        self.mic_position = eval(room_data[2])[0]
 
         # Create a namedtuple for materials TODO: Put dict as csv structure
         matrls = [material for material in eval(room_data[2])[3]]
@@ -54,7 +54,7 @@ class AcousticRoom:
         self.RT20_reflection_test(eval(room_data[2])[2], eval(room_data[2])[0])
 
         # Threshold for significant peaks
-        self.threshold = 80
+        self.threshold = 30
 
     def add_speakers(self, speaker_props) -> None:
         for speaker in speaker_props:
@@ -137,6 +137,9 @@ class AcousticRoom:
         amplitudes_sample = np.abs(amplitudes_sample)
         max_value = amplitudes_sample.max()
         division_factor = max_value / 100
+
+        if division_factor == 0:
+            division_factor = 1
 
         # Add one to index, because 0 peak was deleted above
         indices = [

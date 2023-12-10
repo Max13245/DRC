@@ -210,6 +210,11 @@ def train_loop():
         # Simulate the room
         room.room.simulate(recompute_rir=True)
 
+        # Get recorded sound
+        room.room.mic_array.to_wav(
+            "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
+        )
+
 
 def config_loop():
     """

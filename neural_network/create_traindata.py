@@ -13,18 +13,18 @@ test_case = [
             (10, 16, 8),
             [(3, 10, 1), (2, 5, 3), (4, 11, 2), (9, 13, 2), (10, 12, 6)],
             [
-                "brickwork",
-                "brickwork",
-                "brickwork",
-                "brickwork",
-                "brickwork",
-                "brickwork",
+                "carpet_cotton",
+                "carpet_cotton",
+                "carpet_cotton",
+                "carpet_cotton",
+                "carpet_cotton",
+                "carpet_cotton",
             ],
         ],
     ]
 ]
 
-with open("train_data_input.csv", "w") as csvfile:
+with open("./neural_network/train_data_input.csv", "w") as csvfile:
     # Create a writer object to write to the file
     csvwriter = csv.writer(csvfile)
 

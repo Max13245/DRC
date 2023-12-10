@@ -1,1 +1,1 @@
-./neural_network/assets/guitar_16k.wav,50,"[(2, 2, 2), (10, 16, 8), [(3, 10, 1), (2, 5, 3), (4, 11, 2), (9, 13, 2), (10, 12, 6)], ['carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton']]"
+./neural_network/assets/guitar_16k.wav,50,"[(5, 5, 5), (10, 16, 8), [(10, 0, 8), (2, 10, 3), (4, 0, 2), (3, 2, 0), (3, 0, 7)], ['carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton', 'carpet_cotton']]"

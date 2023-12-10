@@ -3,7 +3,6 @@ from scipy.io import wavfile
 from collections import namedtuple
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 
 # Create named tuple
@@ -170,7 +169,8 @@ class AcousticRoom:
         )
 
     def RT30_reflection_test(self, speaker_positions, mic_position):
-        # Test for every speaker and do 2 sweeptones (different sounds) of ... octave
+        # Test for every speaker and do 3 sweeptones (different sounds) of ... octave
+        first_time = True
         for position in speaker_positions:
             for sound in self.RT30_sounds:
                 # Create a temporary sound source to get the reflection level for that speaker
@@ -180,10 +180,10 @@ class AcousticRoom:
                 # Temporary mic
                 self.room.add_microphone(mic_position, fs=self.fs)
 
-                self.room.simulate()
+                self.room.simulate(recompute_rir=True)
 
                 # Get the rt30 and add to the reflection array
-                RT30 = self.room.measure_rt60(decay_db=2)
+                RT30 = self.room.measure_rt60(decay_db=30)
                 self.reflection_levels = np.append(self.reflection_levels, RT30[0])
 
                 # Remove source and mic, because temporary

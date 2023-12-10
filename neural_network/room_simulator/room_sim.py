@@ -3,6 +3,7 @@ from scipy.io import wavfile
 from collections import namedtuple
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 # Create named tuple
@@ -51,7 +52,6 @@ class AcousticRoom:
         self.init_RT30_sounds()
         self.reflection_levels = np.array([])
         self.RT30_reflection_test(eval(room_data[2])[2], eval(room_data[2])[0])
-        print(self.reflection_levels)
 
         # Threshold for significant peaks
         self.threshold = 30
@@ -138,10 +138,11 @@ class AcousticRoom:
         max_value = amplitudes_sample.max()
         division_factor = max_value / 100
 
+        # In case division is 0
         if division_factor == 0:
             division_factor = 1
 
-        # Add one to index, because 0 peak was deleted above
+        # Add 1 to index, because 0 peak was deleted above
         indices = [
             indx + 1
             for indx, amplitude in enumerate(amplitudes_sample)
@@ -170,7 +171,6 @@ class AcousticRoom:
 
     def RT30_reflection_test(self, speaker_positions, mic_position):
         # Test for every speaker and do 3 sweeptones (different sounds) of ... octave
-        first_time = True
         for position in speaker_positions:
             for sound in self.RT30_sounds:
                 # Create a temporary sound source to get the reflection level for that speaker

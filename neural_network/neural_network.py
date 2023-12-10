@@ -169,7 +169,7 @@ def train_loop():
             fft_samples[sample_num][0], fft_samples[sample_num][1], normalized=False
         )"""
 
-        indices = room.get_significant_waves(fft_samples[sample_num][1])
+        # indices = room.get_significant_waves(fft_samples[sample_num][1])
 
         # Itterate through first half/positive half
         """for indx in indices[0 : int(len(indices) / 2)]:
@@ -182,10 +182,11 @@ def train_loop():
             indices = room.get_significant_waves(sample[1])
 
             # Multiply sample in 5 different streams for five different speakers
+            # Make a copy of array, otherwise connected to each other (same pointer)
             for indx in range(0, len(speaker_audios)):
-                speaker_audios[indx].append(sample[1])
+                speaker_audios[indx].append(np.copy(sample[1]))
 
-            for peak_index in indices:
+            for peak_index in indices[0 : int(len(indices) / 2)]:
                 # Create a state for the neural network
                 # Don't normalize fft input, original fft needed for ifft
                 frequency = sample[0][peak_index]
@@ -198,11 +199,15 @@ def train_loop():
 
                 # Loop over speakers, to multiply peaks with scalers
                 for speaker_indx in range(0, len(speaker_audios)):
-                    speaker_audios[speaker_indx][sample_indx][peak_index] *= scalers[
-                        speaker_indx
-                    ]
+                    speaker_scaler = scalers[speaker_indx]
 
-        # speaker_audio = select_action(formatted_input, n_episode)
+                    # Scale both the amplitudes for negative and positive frequency peaks
+                    speaker_audios[speaker_indx][sample_indx][
+                        peak_index
+                    ] *= speaker_scaler
+                    speaker_audios[speaker_indx][sample_indx][
+                        -peak_index
+                    ] *= speaker_scaler
 
         # TODO: Not right input, it is missing the audio's
         # room.add_speakers(episode[2][2])

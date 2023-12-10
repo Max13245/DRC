@@ -61,13 +61,6 @@ class AcousticRoom:
         for indx, position in enumerate(self.speaker_positions):
             self.room.add_source(position, signal=streams[indx], delay=0)
 
-    def add_mic(self, position: tuple) -> None:
-        self.room.add_microphone(position)
-
-    def add_mics(self, positions: list) -> None:
-        # Positions must be following size: (dim, n_mics)
-        self.room.add_microphone_array(positions)
-
     def adjust_to_master_volume(self, master_percentage: int) -> list:
         # TODO: The amplitude seems to be unlineair so, account for that
         master_factor = master_percentage / 100

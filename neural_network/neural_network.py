@@ -204,6 +204,12 @@ def train_loop():
         # Add speakers to the room
         room.add_speakers(streams)
 
+        # Add microphone to the room
+        room.room.add_microphone(room.mic_position)
+
+        # Simulate the room
+        room.room.simulate(recompute_rir=True)
+
 
 def config_loop():
     """

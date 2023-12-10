@@ -1,4 +1,4 @@
-import numpy as np
+"""import numpy as np
 import matplotlib.pyplot as plt
 import time
 
@@ -64,3 +64,16 @@ plt.xlim(0, 2000)  # Set the x-axis limit to focus on the positive frequencies
 
 plt.tight_layout()
 plt.show()
+"""
+
+import numpy as np
+
+# Define arrays of complex numbers and floats
+complex_array = np.array([3 + 4j, 1 + 2j])
+float_array = np.array([2.5, 1.5])
+
+# Add the arrays using numpy.add()
+result_array = np.add(complex_array, float_array)
+
+# Print the result array
+print("Result Array:", result_array)

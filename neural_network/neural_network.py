@@ -209,14 +209,18 @@ def train_loop():
                         -peak_index
                     ] *= speaker_scaler
 
+        # Create 5 streams for the speakers
+        streams = [room.get_ifft_audio(stream) for stream in speaker_audios]
+
         # TODO: Not right input, it is missing the audio's
         # room.add_speakers(episode[2][2])
 
-        fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
-        reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
+        # fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
+        # reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
 
-        # room.plot_audio(room.master_audio)
-        # room.plot_audio(reconstructed_wave)
+        room.plot_audio(room.master_audio)
+        for stream in streams:
+            room.plot_audio(stream)
 
 
 def config_loop():

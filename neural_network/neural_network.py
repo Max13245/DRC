@@ -164,17 +164,6 @@ def train_loop():
 
         # Sample the audio
         fft_samples = room.get_fft_audio()
-        sample_num = 400
-        """room.plot_fft_sample(
-            fft_samples[sample_num][0], fft_samples[sample_num][1], normalized=False
-        )"""
-
-        # indices = room.get_significant_waves(fft_samples[sample_num][1])
-
-        # Itterate through first half/positive half
-        """for indx in indices[0 : int(len(indices) / 2)]:
-            print(np.abs(fft_samples[sample_num][1][indx]))
-            print(fft_samples[sample_num][0][indx])"""
 
         speaker_audios = [[] for _ in range(5)]
         for sample_indx, sample in enumerate(fft_samples):
@@ -212,15 +201,8 @@ def train_loop():
         # Create 5 streams for the speakers
         streams = [room.get_ifft_audio(stream) for stream in speaker_audios]
 
-        # TODO: Not right input, it is missing the audio's
-        # room.add_speakers(episode[2][2])
-
-        # fft_amplitudes = [amplitude[1] for amplitude in fft_samples]
-        # reconstructed_wave = room.get_ifft_audio(fft_amplitudes)
-
-        room.plot_audio(room.master_audio)
-        for stream in streams:
-            room.plot_audio(stream)
+        # Add speakers to the room
+        room.add_speakers(streams)
 
 
 def config_loop():

@@ -56,10 +56,10 @@ class AcousticRoom:
         # Threshold for significant peaks
         self.threshold = 30
 
-    def add_speakers(self, speaker_props) -> None:
-        for speaker in speaker_props:
-            # speaker[0] is the location of the speaker and speaker[1] is the audio for that speaker
-            self.room.add_source(speaker[0], signal=speaker[1], delay=0)
+    def add_speakers(self, streams) -> None:
+        # One stream is the audio for that speaker
+        for indx, position in enumerate(self.speaker_positions):
+            self.room.add_source(position, signal=streams[indx], delay=0)
 
     def add_mic(self, position: tuple) -> None:
         self.room.add_microphone(position)

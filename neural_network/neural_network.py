@@ -181,10 +181,12 @@ def train_loop():
         # Simulate the room
         room.room.simulate(recompute_rir=True)
 
-        """# Get recorded sound
+        """data_to_wav = time()
+        # Get recorded sound
         room.room.mic_array.to_wav(
             "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
-        )"""
+        )
+        print(f"Data to wav: {time() - data_to_wav}")"""
 
         # Store recorded sound
         room.store_recorded_audio()
@@ -192,10 +194,12 @@ def train_loop():
         # Get fft samples from recorded audio
         recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
 
-        recorded_amplitudes = [
-            np.array(fft_sample[1]) for fft_sample in recorded_fft_samples
-        ]
-        master_amplitudes = [np.array(fft_sample[1]) for fft_sample in fft_samples]
+        recorded_amplitudes = np.array(
+            [np.array(fft_sample[1]) for fft_sample in recorded_fft_samples]
+        )
+        master_amplitudes = np.array(
+            [np.array(fft_sample[1]) for fft_sample in fft_samples]
+        )
 
         recorded_amplitudes = torch.tensor(recorded_amplitudes, dtype=torch.complex128)
         master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)

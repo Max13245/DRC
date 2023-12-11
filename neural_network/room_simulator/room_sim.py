@@ -35,9 +35,11 @@ class AcousticRoom:
 
         self.max_order = 1  # TODO: Is default, can be calculated with sabine formula?
         self.fs, self.audio = wavfile.read(room_data[0])
+        # self.audio = np.array([point[0] for point in self.audio])
         self.master_audio = np.array(
             self.adjust_to_master_volume(int(room_data[1])), dtype="int16"
         )
+        self.recorded_audio = None
 
         # Creating a room
         self.room = pra.ShoeBox(
@@ -107,11 +109,12 @@ class AcousticRoom:
         plt.ylabel("Amplitude")
         plt.show()
 
-    def get_fft_audio(self) -> list:
+    def get_fft_audio(self, audio: np.array) -> list:
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
-        samples = np.array_split(
-            self.master_audio, len(self.master_audio) / (self.fs / 100)
-        )
+        samples = np.array_split(audio, len(audio) / (self.fs / 100))
+        """print(len(samples))
+        print(len(samples[0]))
+        print(len(samples[-1]))"""
 
         fft_samples = []
         for sample in samples:
@@ -134,6 +137,27 @@ class AcousticRoom:
         # Flatten the list from 2d to 1d
         concat_reconst_wave = np.concatenate(reconstructed_wave)
         return concat_reconst_wave
+
+    def store_recorded_audio(self) -> None:
+        self.recorded_audio = self.room.mic_array.signals[0]
+        for indx, amplitude in enumerate(self.master_audio):
+            if amplitude >= 1:
+                break
+        master_difference = self.master_audio[indx] - self.master_audio[indx + 1]
+        master_diff_low = master_difference * 0.80
+        master_diff_high = master_difference * 1.20
+        last_amplitude = self.recorded_audio[0]
+        for indx, amplitude in enumerate(self.recorded_audio[1:]):
+            recorded_difference = last_amplitude - amplitude
+
+            # Check if recorded difference is in a range of 20% from master difference
+            if master_diff_low <= recorded_difference <= master_diff_high:
+                break
+            last_amplitude = amplitude
+
+        self.recorded_audio = self.recorded_audio[
+            indx + 1 : len(self.master_audio) + indx + 1
+        ]
 
     def get_significant_waves(self, amplitudes_sample):
         """Get the highest amplitude peaks with there frequency"""

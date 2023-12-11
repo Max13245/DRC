@@ -12,21 +12,6 @@ import torch.nn.functional as F
 from room_simulator.room_sim import AcousticRoom
 
 
-class ReplayMemory(object):
-    def __init__(self, capacity):
-        self.memory = deque([], maxlen=capacity)
-
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
-
 class DQN(nn.Module):
     def __init__(self, state, n_actions):
         super(DQN, self).__init__()
@@ -73,7 +58,6 @@ target_net.load_state_dict(policy_net.state_dict())
 
 # TODO: Why this optimizer?
 network = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
-memory = ReplayMemory(10000)
 
 
 def select_action(state, step: int):
@@ -89,26 +73,10 @@ def select_action(state, step: int):
 
 
 def optimize_model(current_state, target_state) -> None:
-    if len(memory) < BATCH_SIZE:
-        return
-    transitions = memory.sample(BATCH_SIZE)
-    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-    # detailed explanation). This converts batch-array of Transitions
-    # to Transition of batch-arrays.
-    batch = Transition(*zip(*transitions))
-    state_batch = torch.cat(batch.state)
-    action_batch = torch.cat(batch.action)
-    reward_batch = torch.cat(batch.reward)
-
-    # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-    # columns of actions taken. These are the actions which would've been taken
-    # for each batch state according to policy_net
-    state_action_values = policy_net(state_batch).gather(1, action_batch)
-
     # Compute Huber loss TODO: Is Huber loss the way to goooooo?
     criterion = nn.SmoothL1Loss()
     # Warning: Not sure about unsqueeze when only using rewarch_batch
-    loss = criterion(state_action_values, reward_batch.unsqueeze(1))
+    loss = criterion(current_state, target_state)
 
     # Optimize the model
     network.zero_grad()
@@ -161,7 +129,7 @@ def train_loop():
         static_input = format_static_state(room)
 
         # Sample the audio
-        fft_samples = room.get_fft_audio()
+        fft_samples = room.get_fft_audio(room.master_audio)
 
         speaker_audios = [[] for _ in range(5)]
         for sample_indx, sample in enumerate(fft_samples):
@@ -213,11 +181,14 @@ def train_loop():
             "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
         )
 
-        optimize_model()
-        room.plot_audio(room.master_audio)
-        room.plot_audio(room.room.mic_array.signals[0])
+        # Store recorded sound
+        room.store_recorded_audio()
 
-        break
+        # optimize_model(recorded_amplitudes, master_amplitudes)
+        room.plot_audio_difference(room.master_audio, room.recorded_audio)
+        # room.plot_audio(room.room.mic_array.signals[0])
+
+        break  # Just for testing purposes, delete later
 
 
 def config_loop():

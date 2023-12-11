@@ -375,10 +375,13 @@ def optimize_model():
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
+    print("---------------------------------------------")
+    print(state_action_values, expected_state_action_values.unsqueeze(1))
+    print("---------------------------------------------")
+
     # Compute Huber loss
     criterion = nn.SmoothL1Loss()
     loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
-    print(loss)
 
     # Optimize the model
     optimizer.zero_grad()

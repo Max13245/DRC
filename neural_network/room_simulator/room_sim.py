@@ -35,7 +35,7 @@ class AcousticRoom:
 
         self.max_order = 1  # TODO: Is default, can be calculated with sabine formula?
         self.fs, self.audio = wavfile.read(room_data[0])
-        # self.audio = np.array([point[0] for point in self.audio])
+        self.audio = np.array([point[0] for point in self.audio])
         self.master_audio = np.array(
             self.adjust_to_master_volume(int(room_data[1])), dtype="int16"
         )
@@ -119,9 +119,6 @@ class AcousticRoom:
     def get_fft_audio(self, audio: np.array) -> list:
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(audio, len(audio) / (self.fs / 100))
-        """print(len(samples))
-        print(len(samples[0]))
-        print(len(samples[-1]))"""
 
         fft_samples = []
         for sample in samples:

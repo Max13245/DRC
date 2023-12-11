@@ -75,6 +75,10 @@ def select_action(state, step: int):
 def optimize_model(current_state, target_state) -> None:
     # Compute Huber loss TODO: Is Huber loss the way to goooooo?
     criterion = nn.SmoothL1Loss()
+
+    current_state.requires_grad_()
+    target_state.requires_grad_()
+
     # Warning: Not sure about unsqueeze when only using rewarch_batch
     loss = criterion(current_state, target_state)
 
@@ -82,7 +86,7 @@ def optimize_model(current_state, target_state) -> None:
     network.zero_grad()
     loss.backward()
     # In-place gradient clipping TODO: Look if needed and what good for
-    torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
+    # torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     network.step()
 
 
@@ -147,7 +151,7 @@ def train_loop():
                 frequency = sample[0][peak_index]
                 amplitude = np.abs(sample[1][peak_index])
                 formatted_input = static_input + [frequency, amplitude]
-                tensor_input = torch.FloatTensor(formatted_input)
+                tensor_input = torch.FloatTensor(formatted_input).requires_grad_()
 
                 # Get scalers for the peaks for each speaker
                 scalers = select_action(tensor_input, n_episode)
@@ -184,9 +188,18 @@ def train_loop():
         # Store recorded sound
         room.store_recorded_audio()
 
-        # optimize_model(recorded_amplitudes, master_amplitudes)
-        room.plot_audio_difference(room.master_audio, room.recorded_audio)
-        # room.plot_audio(room.room.mic_array.signals[0])
+        # Get fft samples from recorded audio
+        recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
+
+        recorded_amplitudes = [
+            np.array(fft_sample[1]) for fft_sample in recorded_fft_samples
+        ]
+        master_amplitudes = [np.array(fft_sample[1]) for fft_sample in fft_samples]
+
+        recorded_amplitudes = torch.FloatTensor(recorded_amplitudes)
+        master_amplitudes = torch.FloatTensor(master_amplitudes)
+
+        optimize_model(recorded_amplitudes, master_amplitudes)
 
         break  # Just for testing purposes, delete later
 

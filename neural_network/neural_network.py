@@ -217,6 +217,8 @@ def train_loop():
         room.plot_audio(room.master_audio)
         room.plot_audio(room.room.mic_array.signals[0])
 
+        break
+
 
 def config_loop():
     """

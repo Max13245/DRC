@@ -3,7 +3,6 @@ from scipy.io import wavfile
 from collections import namedtuple
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 
 # Create named tuple
@@ -18,6 +17,7 @@ class AcousticRoom:
         self.room_dim = eval(room_data[2])[1]
         self.speaker_positions = eval(room_data[2])[2]
         self.mic_position = eval(room_data[2])[0]
+        self.directions = eval(room_data[2])[4]
 
         # Create a namedtuple for materials TODO: Put dict as csv structure
         matrls = [material for material in eval(room_data[2])[3]]
@@ -59,7 +59,20 @@ class AcousticRoom:
     def add_speakers(self, streams) -> None:
         # One stream is the audio for that speaker
         for indx, position in enumerate(self.speaker_positions):
-            self.room.add_source(position, signal=streams[indx], delay=0)
+            # Create directivity for the speaker
+            direction_object = pra.directivities.CardioidFamily(
+                orientation=pra.directivities.DirectionVector(
+                    azimuth=self.directions[indx], colatitude=15, degrees=True
+                ),
+                pattern_enum=pra.directivities.DirectivityPattern.CARDIOID,
+            )
+
+            self.room.add_source(
+                position,
+                signal=streams[indx],
+                directivity=direction_object,
+                delay=0,
+            )
 
     def adjust_to_master_volume(self, master_percentage: int) -> list:
         # TODO: The amplitude seems to be unlineair so, account for that

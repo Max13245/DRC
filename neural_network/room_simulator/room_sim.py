@@ -109,6 +109,13 @@ class AcousticRoom:
         plt.ylabel("Amplitude")
         plt.show()
 
+    def plot_audio_difference(self, audio1: np.array, audio2: np.array) -> None:
+        plt.plot(range(0, len(audio1)), audio1)
+        plt.plot(range(0, len(audio2)), audio2)
+        plt.xlabel("Time")
+        plt.ylabel("Amplitude")
+        plt.show()
+
     def get_fft_audio(self, audio: np.array) -> list:
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(audio, len(audio) / (self.fs / 100))

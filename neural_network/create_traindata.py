@@ -43,24 +43,55 @@ for filename in listdir(TRAIN_SOUNDS_DIR):
                     z_block_length = z / BLOCKS
                     for y_block in range(BLOCKS):
                         for z_block in range(BLOCKS):
-                            maximum_reach_x = x_block_length * x_block
+                            maximum_reach_x = x_block_length * (x_block + 1)
                             minimum_reach_x = maximum_reach_x - x_block_length
                             mic_random_x_position = round(
                                 uniform(minimum_reach_x, maximum_reach_x), 2
                             )
-                            maximum_reach_y = y_block_length * y_block
+                            maximum_reach_y = y_block_length * (y_block + 1)
                             minimum_reach_y = maximum_reach_y - y_block_length
                             mic_random_y_position = round(
                                 uniform(minimum_reach_y, maximum_reach_y), 2
                             )
-                            maximum_reach_z = z_block_length * z_block
+                            maximum_reach_z = z_block_length * (z_block + 1)
                             minimum_reach_z = maximum_reach_z - z_block_length
                             mic_random_z_position = round(
                                 uniform(minimum_reach_z, maximum_reach_z), 2
                             )
                             speaker_height = round(uniform(0, MAX_SPEAKER_HEIGHT), 2)
+                            speaker_height_1 = speaker_height + round(
+                                uniform(-MAX_PERTURBATION, MAX_PERTURBATION),
+                                2,
+                            )
+                            if speaker_height_1 < 0:
+                                speaker_height_1 = 0
+                            speaker_height_2 = speaker_height + round(
+                                uniform(-MAX_PERTURBATION, MAX_PERTURBATION),
+                                2,
+                            )
+                            if speaker_height_2 < 0:
+                                speaker_height_2 = 0
+                            speaker_height_3 = speaker_height + round(
+                                uniform(-MAX_PERTURBATION, MAX_PERTURBATION),
+                                2,
+                            )
+                            if speaker_height_3 < 0:
+                                speaker_height_3 = 0
+                            speaker_height_4 = speaker_height + round(
+                                uniform(-MAX_PERTURBATION, MAX_PERTURBATION),
+                                2,
+                            )
+                            if speaker_height_4 < 0:
+                                speaker_height_4 = 0
+                            speaker_height_5 = speaker_height + round(
+                                uniform(-MAX_PERTURBATION, MAX_PERTURBATION),
+                                2,
+                            )
+                            if speaker_height_5 < 0:
+                                speaker_height_5 = 0
+
                             train_sample = [
-                                f"./neural_network/assets/train_sounds{filename}",
+                                f"./neural_network/assets/train_sounds/{filename}",
                                 randint(1, 100),
                                 [
                                     (
@@ -73,62 +104,39 @@ for filename in listdir(TRAIN_SOUNDS_DIR):
                                         (
                                             round(uniform(0, x / 2), 2),
                                             round(uniform(0, y / 2), 2),
-                                            speaker_height
-                                            + round(
-                                                uniform(
-                                                    -MAX_PERTURBATION, MAX_PERTURBATION
-                                                ),
-                                                2,
-                                            ),
+                                            speaker_height_1,
                                         ),  # Speaker 1
                                         (
                                             round(uniform(0, x / 2), 2),
                                             round(uniform(y / 2, y), 2),
-                                            speaker_height
-                                            + round(
-                                                uniform(
-                                                    -MAX_PERTURBATION, MAX_PERTURBATION
-                                                ),
-                                                2,
-                                            ),
+                                            speaker_height_2,
                                         ),  # Speaker 2
                                         (
                                             round(uniform(x / 2, x), 2),
                                             round(uniform(y / 2, y), 2),
-                                            speaker_height
-                                            + round(
-                                                uniform(
-                                                    -MAX_PERTURBATION, MAX_PERTURBATION
-                                                ),
-                                                2,
-                                            ),
+                                            speaker_height_3,
                                         ),  # Speaker 3
                                         (
                                             round(uniform(x / 2, x), 2),
                                             round(uniform(0, y / 2), 2),
-                                            speaker_height
-                                            + round(
-                                                uniform(
-                                                    -MAX_PERTURBATION, MAX_PERTURBATION
-                                                ),
-                                                2,
-                                            ),
+                                            speaker_height_4,
                                         ),  # Speaker 4
                                         (
                                             randint(0, x),
                                             randint(0, y),
-                                            speaker_height
-                                            + round(
-                                                uniform(
-                                                    -MAX_PERTURBATION, MAX_PERTURBATION
-                                                ),
-                                                2,
-                                            ),
+                                            speaker_height_5,
                                         ),  # Subwoofer
                                     ],  # Speaker positions
                                     [
                                         choice(MATERIALS) for _ in range(6)
                                     ],  # 6 Materials
+                                    [
+                                        round(uniform(0, 90), 2),
+                                        round(uniform(90, 180), 2),
+                                        round(uniform(180, 270), 2),
+                                        round(uniform(270, 360), 2),
+                                        round(uniform(0, 360), 2),
+                                    ],
                                 ],
                             ]
                             train_data.append(train_sample)

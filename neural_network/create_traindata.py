@@ -3,8 +3,8 @@ from random import randint, uniform, choice
 from os import listdir
 
 # Everything in meters
-MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH = 3, 20
-X_BLOCKS, Y_BLOCKS, Z_BLOCKS = 3, 3, 3
+MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH = 3, 10
+BLOCKS = 3
 MAX_SPEAKER_HEIGHT = 2
 MAX_PERTURBATION = 0.5
 TRAIN_SOUNDS_DIR = "./neural_network/assets/train_sounds"
@@ -37,22 +37,22 @@ for filename in listdir(TRAIN_SOUNDS_DIR):
     for x in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
         for y in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
             for z in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
-                for x_block in range(X_BLOCKS):
-                    for y_block in range(Y_BLOCKS):
-                        for z_block in range(Z_BLOCKS):
-                            x_block_length = x / X_BLOCKS
+                for x_block in range(BLOCKS):
+                    x_block_length = x / BLOCKS
+                    y_block_length = y / BLOCKS
+                    z_block_length = z / BLOCKS
+                    for y_block in range(BLOCKS):
+                        for z_block in range(BLOCKS):
                             maximum_reach_x = x_block_length * x_block
                             minimum_reach_x = maximum_reach_x - x_block_length
                             mic_random_x_position = round(
                                 uniform(minimum_reach_x, maximum_reach_x), 2
                             )
-                            y_block_length = y / Y_BLOCKS
                             maximum_reach_y = y_block_length * y_block
                             minimum_reach_y = maximum_reach_y - y_block_length
                             mic_random_y_position = round(
                                 uniform(minimum_reach_y, maximum_reach_y), 2
                             )
-                            z_block_length = z / Z_BLOCKS
                             maximum_reach_z = z_block_length * z_block
                             minimum_reach_z = maximum_reach_z - z_block_length
                             mic_random_z_position = round(

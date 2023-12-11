@@ -53,13 +53,11 @@ Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"
 # EPS_START is the starting value of epsilon
 # EPS_END is the final value of epsilon
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
-# TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
 BATCH_SIZE = 128
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 1000
-TAU = 0.005
 LR = 1e-4
 
 # TODO: Make a program to get states and perform actions
@@ -74,7 +72,7 @@ target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
 # TODO: Why this optimizer?
-optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
+network = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
@@ -90,7 +88,7 @@ def select_action(state, step: int):
         return [random.uniform(0, 1) for _ in range(0, 5)]
 
 
-def optimize_model() -> None:
+def optimize_model(current_state, target_state) -> None:
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
@@ -113,11 +111,11 @@ def optimize_model() -> None:
     loss = criterion(state_action_values, reward_batch.unsqueeze(1))
 
     # Optimize the model
-    optimizer.zero_grad()
+    network.zero_grad()
     loss.backward()
     # In-place gradient clipping TODO: Look if needed and what good for
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
-    optimizer.step()
+    network.step()
 
 
 def get_train_data(file_path: str) -> list:
@@ -214,6 +212,10 @@ def train_loop():
         room.room.mic_array.to_wav(
             "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
         )
+
+        optimize_model()
+        room.plot_audio(room.master_audio)
+        room.plot_audio(room.room.mic_array.signals[0])
 
 
 def config_loop():

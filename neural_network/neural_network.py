@@ -73,8 +73,9 @@ def select_action(state, step: int):
 
 
 def optimize_model(current_state, target_state) -> None:
-    # Compute Huber loss TODO: Is Huber loss the way to goooooo?
-    criterion = nn.SmoothL1Loss()
+    # Use L1Loss, because it suports complex numbers
+    # TODO: Doesn't punish higher loss as much as other loss functions
+    criterion = nn.L1Loss()
 
     current_state.requires_grad_()
     target_state.requires_grad_()
@@ -180,10 +181,10 @@ def train_loop():
         # Simulate the room
         room.room.simulate(recompute_rir=True)
 
-        # Get recorded sound
+        """# Get recorded sound
         room.room.mic_array.to_wav(
             "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
-        )
+        )"""
 
         # Store recorded sound
         room.store_recorded_audio()
@@ -196,8 +197,8 @@ def train_loop():
         ]
         master_amplitudes = [np.array(fft_sample[1]) for fft_sample in fft_samples]
 
-        recorded_amplitudes = torch.FloatTensor(recorded_amplitudes)
-        master_amplitudes = torch.FloatTensor(master_amplitudes)
+        recorded_amplitudes = torch.tensor(recorded_amplitudes, dtype=torch.complex128)
+        master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)
 
         optimize_model(recorded_amplitudes, master_amplitudes)
 

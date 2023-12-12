@@ -36,9 +36,7 @@ class AcousticRoom:
         self.max_order = 1  # TODO: Is default, can be calculated with sabine formula?
         self.fs, self.audio = wavfile.read(room_data[0])
         self.audio = np.array([point[0] for point in self.audio])
-        self.master_audio = np.array(
-            self.adjust_to_master_volume(int(room_data[1])), dtype="int16"
-        )
+        self.master_audio = self.adjust_to_master_volume(int(room_data[1]))
         self.recorded_audio = None
 
         # Creating a room
@@ -76,7 +74,7 @@ class AcousticRoom:
                 delay=0,
             )
 
-    def adjust_to_master_volume(self, master_percentage: int) -> list:
+    def adjust_to_master_volume(self, master_percentage: int) -> np.array:
         # TODO: The amplitude seems to be unlineair so, account for that
         master_factor = master_percentage / 100
         return (self.audio * master_factor).astype("int16")
@@ -116,7 +114,7 @@ class AcousticRoom:
         plt.ylabel("Amplitude")
         plt.show()
 
-    def get_fft_audio(self, audio: np.array) -> list:
+    def get_fft_audio(self, audio: np.array) -> np.array:
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(audio, len(audio) / (self.fs / 100))
 
@@ -131,7 +129,7 @@ class AcousticRoom:
 
             fft_samples.append((freqs, fft_result))
 
-        return fft_samples
+        return np.array(fft_samples)
 
     def get_ifft_audio(self, fft_amplitudes: list) -> np.array:
         # Compute the inverse of the (altered) fft for every sample

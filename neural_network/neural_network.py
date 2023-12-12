@@ -181,12 +181,10 @@ def train_loop():
         # Simulate the room
         room.room.simulate(recompute_rir=True)
 
-        """data_to_wav = time()
         # Get recorded sound
-        room.room.mic_array.to_wav(
+        """room.room.mic_array.to_wav(
             "./neural_network/first_test.wav", norm=True, bitdepth=np.int16
-        )
-        print(f"Data to wav: {time() - data_to_wav}")"""
+        )"""
 
         # Store recorded sound
         room.store_recorded_audio()
@@ -205,6 +203,8 @@ def train_loop():
         master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)
 
         optimize_model(recorded_amplitudes, master_amplitudes)
+
+        print("Done")
 
         break  # Just for testing purposes, delete later
 

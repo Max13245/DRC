@@ -82,6 +82,7 @@ def optimize_model(current_state, target_state) -> None:
 
     # Warning: Not sure about unsqueeze when only using rewarch_batch
     loss = criterion(current_state, target_state)
+    print(loss)
 
     # Optimize the model
     network.zero_grad()

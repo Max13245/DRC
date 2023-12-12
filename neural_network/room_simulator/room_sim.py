@@ -37,7 +37,6 @@ class AcousticRoom:
         self.fs, self.audio = wavfile.read(room_data[0])
 
         # If dubble stream input get left of pair
-        print(type(self.audio[0]))
         if type(self.audio[0]) != np.int16:
             self.audio = np.array([pair[0] for pair in self.audio])
 
@@ -120,6 +119,10 @@ class AcousticRoom:
         plt.show()
 
     def get_fft_audio(self, audio: np.array) -> np.array:
+        # Cut of last part of audio doesn't split in parts of self.fs/100
+        residue = len(audio) % self.fs
+        audio = audio[:-residue]
+
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(audio, len(audio) / (self.fs / 100))
 

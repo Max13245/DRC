@@ -82,7 +82,7 @@ def optimize_model(current_state, target_state) -> None:
 
     # Warning: Not sure about unsqueeze when only using rewarch_batch
     loss = criterion(current_state, target_state)
-    print(loss)
+    print(f"Loss: {loss}")
 
     # Optimize the model
     network.zero_grad()
@@ -204,10 +204,6 @@ def train_loop():
         master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)
 
         optimize_model(recorded_amplitudes, master_amplitudes)
-
-        print("Done")
-
-        break  # Just for testing purposes, delete later
 
 
 def config_loop():

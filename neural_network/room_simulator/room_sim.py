@@ -40,7 +40,10 @@ class AcousticRoom:
         if type(self.audio[0]) != np.int16:
             self.audio = np.array([pair[0] for pair in self.audio])
 
-        self.master_audio = self.adjust_to_master_volume(int(room_data[1]))
+        # Adjust master audio to master volume and remove last part (residue)
+        self.master_volume = int(room_data[1])
+        self.master_audio = self.adjust_to_master_volume()
+        self.master_audio = self.remove_residue(self.master_audio)
         self.recorded_audio = None
 
         # Creating a room
@@ -78,9 +81,9 @@ class AcousticRoom:
                 delay=0,
             )
 
-    def adjust_to_master_volume(self, master_percentage: int) -> np.array:
+    def adjust_to_master_volume(self) -> np.array:
         # TODO: The amplitude seems to be unlineair so, account for that
-        master_factor = master_percentage / 100
+        master_factor = self.master_volume / 100
         return (self.audio * master_factor).astype("int16")
 
     def get_normalized_fft(self, fft_sample: np.array) -> np.array:
@@ -119,10 +122,6 @@ class AcousticRoom:
         plt.show()
 
     def get_fft_audio(self, audio: np.array) -> np.array:
-        # Cut of last part of audio doesn't split in parts of self.fs/100
-        residue = len(audio) % self.fs
-        audio = audio[:-residue]
-
         # For now devide by fs, but might be to large (sample by a whole num derived from fs)
         samples = np.array_split(audio, len(audio) / (self.fs / 100))
 
@@ -139,6 +138,11 @@ class AcousticRoom:
 
         return np.array(fft_samples)
 
+    def remove_residue(self, audio: np.array):
+        residue = len(audio) % self.fs
+        audio = audio[:-residue]
+        return audio
+
     def get_ifft_audio(self, fft_amplitudes: list) -> np.array:
         # Compute the inverse of the (altered) fft for every sample
         # Use absolute to get only the amplitude
@@ -150,23 +154,24 @@ class AcousticRoom:
 
     def store_recorded_audio(self) -> None:
         self.recorded_audio = self.room.mic_array.signals[0]
+        amplitude_threshold = round(1 * (1 + self.master_volume / 100))
         for indx, amplitude in enumerate(self.master_audio):
-            if amplitude >= 1:
+            if amplitude >= amplitude_threshold:
                 break
         master_difference = self.master_audio[indx] - self.master_audio[indx + 1]
-        master_diff_low = master_difference * 0.80
-        master_diff_high = master_difference * 1.20
+        master_diff_low = master_difference * 0.50
+        master_diff_high = master_difference * 1.50
         last_amplitude = self.recorded_audio[0]
         for indx, amplitude in enumerate(self.recorded_audio[1:]):
             recorded_difference = last_amplitude - amplitude
 
-            # Check if recorded difference is in a range of 20% from master difference
+            # Check if recorded difference is in a range of 50% from master difference
             if master_diff_low <= recorded_difference <= master_diff_high:
                 break
             last_amplitude = amplitude
 
         self.recorded_audio = self.recorded_audio[
-            indx + 1 : len(self.master_audio) + indx + 1
+            indx - 1 : len(self.master_audio) + indx - 1
         ]
 
     def get_significant_waves(self, amplitudes_sample):

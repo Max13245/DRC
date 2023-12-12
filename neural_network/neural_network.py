@@ -123,6 +123,7 @@ def train_loop():
     Before the audio is put trough the NN it will be adjusted
     to the master volume.
     """
+    n_skipped = 0
 
     # Get episode data from train data file
     data = get_train_data("./neural_network/train_data_input.csv")
@@ -188,7 +189,13 @@ def train_loop():
         )"""
 
         # Store recorded sound
-        room.store_recorded_audio()
+        stored_succesful = room.store_recorded_audio()
+
+        # TODO: Fix store recorded audio, for now skip it
+        if not stored_succesful:
+            n_skipped += 1
+            print(f"Episode {n_episode}: skipped, total skipped: {n_skipped}")
+            continue
 
         # Get fft samples from recorded audio
         recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
@@ -204,6 +211,7 @@ def train_loop():
         master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)
 
         optimize_model(recorded_amplitudes, master_amplitudes)
+        print(f"Episode {n_episode}: done")
 
 
 def config_loop():

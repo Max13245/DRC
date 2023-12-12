@@ -152,7 +152,7 @@ class AcousticRoom:
         concat_reconst_wave = np.concatenate(reconstructed_wave)
         return concat_reconst_wave
 
-    def store_recorded_audio(self) -> None:
+    def store_recorded_audio(self) -> bool:
         self.recorded_audio = self.room.mic_array.signals[0]
         amplitude_threshold = round(1 * (1 + self.master_volume / 100))
         for indx, amplitude in enumerate(self.master_audio):
@@ -169,10 +169,13 @@ class AcousticRoom:
             if master_diff_low <= recorded_difference <= master_diff_high:
                 break
             last_amplitude = amplitude
+            if indx >= 300:
+                return False
 
         self.recorded_audio = self.recorded_audio[
             indx - 1 : len(self.master_audio) + indx - 1
         ]
+        return True
 
     def get_significant_waves(self, amplitudes_sample):
         """Get the highest amplitude peaks with there frequency"""

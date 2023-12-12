@@ -35,7 +35,12 @@ class AcousticRoom:
 
         self.max_order = 1  # TODO: Is default, can be calculated with sabine formula?
         self.fs, self.audio = wavfile.read(room_data[0])
-        self.audio = np.array([point[0] for point in self.audio])
+
+        # If dubble stream input get left of pair
+        print(type(self.audio[0]))
+        if type(self.audio[0]) != np.int16:
+            self.audio = np.array([pair[0] for pair in self.audio])
+
         self.master_audio = self.adjust_to_master_volume(int(room_data[1]))
         self.recorded_audio = None
 

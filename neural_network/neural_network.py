@@ -64,6 +64,8 @@ def select_action(state, step: int):
     # Use eps_threshold to have a good balance between exploration and exploitation
     random_balance = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1.0 * step / EPS_DECAY)
+    with torch.no_grad():
+        return policy_net(state)
     if random_balance > eps_threshold:
         with torch.no_grad():
             return policy_net(state)
@@ -72,7 +74,7 @@ def select_action(state, step: int):
         return [random.uniform(0, 1) for _ in range(0, 5)]
 
 
-def optimize_model(current_state, target_state) -> None:
+def optimize_model(current_state, target_state) -> float:
     # Use L1Loss, because it suports complex numbers
     # TODO: Doesn't punish higher loss as much as other loss functions
     criterion = nn.L1Loss()
@@ -82,7 +84,7 @@ def optimize_model(current_state, target_state) -> None:
 
     # Warning: Not sure about unsqueeze when only using rewarch_batch
     loss = criterion(current_state, target_state)
-    print(f"Loss: {loss}")
+    # print(f"Loss: {loss}")
 
     # Optimize the model
     network.zero_grad()
@@ -90,6 +92,7 @@ def optimize_model(current_state, target_state) -> None:
     # In-place gradient clipping TODO: Look if needed and what good for
     # torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     network.step()
+    return loss
 
 
 def get_train_data(file_path: str) -> list:
@@ -207,11 +210,21 @@ def train_loop():
             [np.array(fft_sample[1]) for fft_sample in fft_samples]
         )
 
-        recorded_amplitudes = torch.tensor(recorded_amplitudes, dtype=torch.complex128)
-        master_amplitudes = torch.tensor(master_amplitudes, dtype=torch.complex128)
+        all_loss = []
+        for indx in range(0, len(recorded_amplitudes)):
+            recorded_amplitudes_tensor = torch.tensor(
+                recorded_amplitudes[indx], dtype=torch.complex128
+            )
+            master_amplitudes_tensor = torch.tensor(
+                master_amplitudes[indx], dtype=torch.complex128
+            )
+            loss = optimize_model(
+                recorded_amplitudes_tensor, master_amplitudes_tensor
+            ).item()
+            all_loss.append(loss)
 
-        optimize_model(recorded_amplitudes, master_amplitudes)
         print(f"Episode {n_episode}: done")
+        print(f"Average loss: {round(sum(all_loss) / len(all_loss), 2)}")
 
 
 def config_loop():

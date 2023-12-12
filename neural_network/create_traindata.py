@@ -1,5 +1,5 @@
 from csv import writer
-from random import randint, uniform, choice
+from random import randint, uniform, choice, sample
 from os import listdir
 
 # Everything in meters
@@ -34,6 +34,7 @@ MATERIALS = [
 
 train_data = []
 for filename in listdir(TRAIN_SOUNDS_DIR):
+    train_data_single_sound = []
     for x in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
         for y in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
             for z in range(MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH):
@@ -139,7 +140,9 @@ for filename in listdir(TRAIN_SOUNDS_DIR):
                                     ],
                                 ],
                             ]
-                            train_data.append(train_sample)
+                            train_data_single_sound.append(train_sample)
+    sampled_train_data = sample(train_data_single_sound, 200)
+    train_data += sampled_train_data
 
 with open("./neural_network/train_data_input.csv", "w") as csvfile:
     # Create a writer object to write to the file

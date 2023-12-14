@@ -1,6 +1,5 @@
 import math
 import random
-from collections import namedtuple, deque
 import csv
 import numpy as np
 
@@ -15,13 +14,13 @@ from room_simulator.room_sim import AcousticRoom
 class DQN(nn.Module):
     def __init__(self, state, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(state, 128)  # Input layer
+        self.layer1 = nn.Linear(state, 128)  # Hidden layer
         self.layer2 = nn.Linear(128, 128)  # Hidden layer
         self.layer3 = nn.Linear(128, n_actions)  # Output layer
 
     def forward(self, x):
-        x = F.relu(self.layer1(x))  # TODO: Not sure about relu
-        x = F.relu(self.layer2(x))  # TODO: Not sure about relu
+        x = F.relu(self.layer1(x))
+        x = F.relu(self.layer2(x))
         x = F.sigmoid(self.layer3(x))
         return x
 
@@ -30,34 +29,23 @@ class DQN(nn.Module):
 cuda_available = torch.cuda.is_available()
 device = torch.device("cuda" if cuda_available else "cpu")
 
-# TODO: next_state might not be needed here
-Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
-
-
-# BATCH_SIZE is the number of transitions sampled from the replay buffer
 # EPS_START is the starting value of epsilon
 # EPS_END is the final value of epsilon
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 128
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 1000
-LR = 1e-4
+LR = 0.01
 
-# TODO: Make a program to get states and perform actions
-# Get number of actions that the network can take (output is five numbers from 0 - 1)
 N_OUPUTS = 5
-# Get the number of state observations (inputs for the network) TODO: don't set state to None
-state, info = None, None
 N_OBSERVATIONS = 35  # len(state)
 
 policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
-# TODO: Why this optimizer?
-network = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
+network = optim.SGD(policy_net.parameters(), lr=LR, amsgrad=True)
 
 
 def select_action(state, step: int):
@@ -75,7 +63,7 @@ def select_action(state, step: int):
 
 
 def optimize_model(current_state, target_state) -> float:
-    # Use L1Loss, because it suports complex numbers
+    # Use MAE Loss, because it suports complex numbers
     # TODO: Doesn't punish higher loss as much as other loss functions
     criterion = nn.L1Loss()
 
@@ -89,7 +77,6 @@ def optimize_model(current_state, target_state) -> float:
     # Optimize the model
     network.zero_grad()
     loss.backward()
-    # In-place gradient clipping TODO: Look if needed and what good for
     # torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     network.step()
     return loss

@@ -35,6 +35,8 @@ class AcousticRoom:
 
         self.max_order = 1  # TODO: Is default, can be calculated with sabine formula?
         self.fs, self.audio = wavfile.read(room_data[0])
+        self.audio = self.remove_residue(self.audio)
+        self.audio = self.get_random_sample(self.audio)
 
         # If dubble stream input get left of pair
         if type(self.audio[0]) != np.int16:
@@ -43,7 +45,6 @@ class AcousticRoom:
         # Adjust master audio to master volume and remove last part (residue)
         self.master_volume = int(room_data[1])
         self.master_audio = self.adjust_to_master_volume()
-        self.master_audio = self.remove_residue(self.master_audio)
         self.recorded_audio = None
 
         # Creating a room
@@ -143,6 +144,13 @@ class AcousticRoom:
         audio = audio[:-residue]
         return audio
 
+    def get_random_sample(self, audio: np.array):
+        audio_duration = len(audio) / self.fs
+        if audio_duration <= 10:
+            return audio
+        random_point = np.random.randint(0, int(audio_duration - 10)) * self.fs
+        return audio[random_point : random_point + (10 * self.fs)]
+
     def get_ifft_audio(self, fft_amplitudes: list) -> np.array:
         # Compute the inverse of the (altered) fft for every sample
         # Use absolute to get only the amplitude
@@ -153,8 +161,9 @@ class AcousticRoom:
         return concat_reconst_wave
 
     def store_recorded_audio(self) -> bool:
+        # Use angle between two lines of original soundwave
         self.recorded_audio = self.room.mic_array.signals[0]
-        amplitude_threshold = round(1 * (1 + self.master_volume / 100))
+        amplitude_threshold = round(1 + self.master_volume / 100)
         for indx, amplitude in enumerate(self.master_audio):
             if amplitude >= amplitude_threshold:
                 break

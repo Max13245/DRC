@@ -45,7 +45,7 @@ policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
-network = optim.SGD(policy_net.parameters(), lr=LR, amsgrad=True)
+network = optim.SGD(policy_net.parameters(), lr=LR)
 
 
 def select_action(state, step: int):
@@ -54,7 +54,7 @@ def select_action(state, step: int):
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1.0 * step / EPS_DECAY)
     if random_balance > eps_threshold:
         with torch.no_grad():
-            return policy_net(state)
+            return torch.mul(policy_net(state), 2)
     else:
         # Random action (five random numbers between 0 and 1)
         return [random.uniform(0, 1) for _ in range(0, 5)]

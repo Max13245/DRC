@@ -52,8 +52,6 @@ def select_action(state, step: int):
     # Use eps_threshold to have a good balance between exploration and exploitation
     random_balance = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1.0 * step / EPS_DECAY)
-    with torch.no_grad():
-        return policy_net(state)
     if random_balance > eps_threshold:
         with torch.no_grad():
             return policy_net(state)

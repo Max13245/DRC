@@ -194,13 +194,7 @@ def train_loop():
         )"""
 
         # Store recorded sound
-        stored_succesful = room.store_recorded_audio()
-
-        # TODO: Fix store recorded audio, for now skip it
-        if not stored_succesful:
-            n_skipped += 1
-            print(f"Episode {n_episode}: skipped, total skipped: {n_skipped}")
-            continue
+        room.store_recorded_audio()
 
         # Get fft samples from recorded audio
         recorded_fft_samples = room.get_fft_audio(room.recorded_audio)

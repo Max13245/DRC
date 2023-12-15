@@ -160,31 +160,47 @@ class AcousticRoom:
         concat_reconst_wave = np.concatenate(reconstructed_wave)
         return concat_reconst_wave
 
+    def calculate_angle(self, y1, y2, y3):
+        # Vectors representing the directions of the lines
+        vec_AB = np.array([1, y2 - y1])
+        vec_BC = np.array([1, y3 - y2])
+
+        # Calculate the dot product
+        dot_product = np.dot(vec_AB, vec_BC)
+
+        # Calculate the magnitudes of the vectors
+        magnitude_AB = np.linalg.norm(vec_AB)
+        magnitude_BC = np.linalg.norm(vec_BC)
+
+        # Calculate the cosine of the angle
+        cos_theta = dot_product / (magnitude_AB * magnitude_BC)
+
+        # Calculate the angle in radians
+        theta_rad = np.arccos(np.clip(cos_theta, -1.0, 1.0))
+
+        magnitude, angle_rad = np.abs(cos_theta), np.angle(cos_theta)
+        # Use the angle in polar form
+        theta_rad = angle_rad
+
+        # Convert the angle to degrees
+        theta_deg = np.degrees(theta_rad)
+
+        return 180 - theta_deg
+
     def store_recorded_audio(self) -> bool:
-        # Use angle between two lines of original soundwave
+        # Use angle between two lines
         self.recorded_audio = self.room.mic_array.signals[0]
-        amplitude_threshold = round(1 + self.master_volume / 100)
-        for indx, amplitude in enumerate(self.master_audio):
-            if amplitude >= amplitude_threshold:
+        for indx in range(0, len(self.recorded_audio)):
+            angle = self.calculate_angle(
+                self.recorded_audio[indx],
+                self.recorded_audio[indx + 1],
+                self.recorded_audio[indx + 2],
+            )
+            if angle <= 90:
+                self.recorded_audio = self.recorded_audio[
+                    indx : len(self.master_audio) + indx
+                ]
                 break
-        master_difference = self.master_audio[indx] - self.master_audio[indx + 1]
-        master_diff_low = master_difference * 0.50
-        master_diff_high = master_difference * 1.50
-        last_amplitude = self.recorded_audio[0]
-        for indx, amplitude in enumerate(self.recorded_audio[1:]):
-            recorded_difference = last_amplitude - amplitude
-
-            # Check if recorded difference is in a range of 50% from master difference
-            if master_diff_low <= recorded_difference <= master_diff_high:
-                break
-            last_amplitude = amplitude
-            if indx >= 300:
-                return False
-
-        self.recorded_audio = self.recorded_audio[
-            indx - 1 : len(self.master_audio) + indx - 1
-        ]
-        return True
 
     def get_significant_waves(self, amplitudes_sample):
         """Get the highest amplitude peaks with there frequency"""

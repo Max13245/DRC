@@ -10,6 +10,9 @@ room_materials = namedtuple(
     "room_materials", ["ceiling", "floor", "north", "east", "south", "west"]
 )
 
+# Set seed so reproduceable
+np.random.seed(100)
+
 
 class AcousticRoom:
     def __init__(self, room_data) -> None:
@@ -201,6 +204,10 @@ class AcousticRoom:
                     indx : len(self.master_audio) + indx
                 ]
                 break
+
+            if indx > 2000:
+                return False
+        return True
 
     def get_significant_waves(self, amplitudes_sample):
         """Get the highest amplitude peaks with there frequency"""

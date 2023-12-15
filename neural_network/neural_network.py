@@ -3,6 +3,7 @@ import random
 import csv
 import numpy as np
 from collections import namedtuple
+import csv
 
 import torch
 import torch.nn as nn
@@ -10,6 +11,10 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from room_simulator.room_sim import AcousticRoom
+
+# Set seed so repreduceable
+random.seed(100)
+np.random.seed(100)
 
 
 class DQN(nn.Module):
@@ -43,9 +48,6 @@ N_OUPUTS = 5
 N_OBSERVATIONS = 35  # len(state)
 
 policy_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
-target_net = DQN(N_OBSERVATIONS, N_OUPUTS).to(device)
-target_net.load_state_dict(policy_net.state_dict())
-
 network = optim.SGD(policy_net.parameters(), lr=LR)
 
 # Sample index to get the measured value
@@ -117,7 +119,8 @@ def train_loop():
     Before the audio is put trough the NN it will be adjusted
     to the master volume.
     """
-    n_skipped = 0
+
+    loss_graph_data = []
 
     # Get episode data from train data file
     data = get_train_data("./neural_network/train_data_input.csv")
@@ -131,7 +134,10 @@ def train_loop():
         static_input = format_static_state(room)
 
         # Sample the audio
-        fft_samples = room.get_fft_audio(room.master_audio)
+        try:
+            fft_samples = room.get_fft_audio(room.master_audio)
+        except:
+            continue
 
         speaker_audios = [[] for _ in range(5)]
         for sample_indx, sample in enumerate(fft_samples):
@@ -150,7 +156,6 @@ def train_loop():
                 amplitude = np.abs(sample[1][peak_index])
                 formatted_input = static_input + [frequency, amplitude]
                 tensor_input = torch.FloatTensor(formatted_input).requires_grad_()
-
                 # Get scalers for the peaks for each speaker
                 scalers = select_action(tensor_input, n_episode)
 
@@ -194,10 +199,16 @@ def train_loop():
         )"""
 
         # Store recorded sound
-        room.store_recorded_audio()
+        succes = room.store_recorded_audio()
+
+        if not succes:
+            continue
 
         # Get fft samples from recorded audio
-        recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
+        try:
+            recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
+        except:
+            continue
         recorded_amplitudes = np.array(
             [np.array(fft_sample[1]) for fft_sample in recorded_fft_samples]
         )
@@ -225,8 +236,20 @@ def train_loop():
             loss = optimize_model(NN_outputs_tensor, speaker_target_tensor).item()
             all_loss.append(loss)
 
+        average_loss = round(sum(all_loss) / len(all_loss), 2)
         print(f"Episode {n_episode}: done")
-        print(f"Average loss: {round(sum(all_loss) / len(all_loss), 2)}")
+        print(f"Average loss: {average_loss}")
+
+        if n_episode % 10 == 0:
+            loss_graph_data.append(average_loss)
+            with open("./neural_network/loss_data.csv", "w") as csvfile:
+                # Create a writer object to write to the file
+                csvwriter = csv.writer(csvfile)
+
+                # writing the data rows
+                csvwriter.writerows([loss_graph_data])
+
+    torch.save(policy_net, "./neural_network/model.pth")
 
 
 def config_loop():

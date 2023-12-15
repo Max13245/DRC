@@ -1,6 +1,9 @@
 from csv import writer
-from random import randint, uniform, choice, sample
+from random import randint, uniform, choice, sample, seed
 from os import listdir
+
+# Set seed so repreduceable
+seed(100)
 
 # Everything in meters
 MINIMUM_ROOM_LENGTH, MAXIMUM_ROOM_LENGTH = 3, 10

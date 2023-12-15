@@ -2,6 +2,7 @@ import math
 import random
 import csv
 import numpy as np
+from collections import namedtuple
 
 import torch
 import torch.nn as nn
@@ -47,6 +48,12 @@ target_net.load_state_dict(policy_net.state_dict())
 
 network = optim.SGD(policy_net.parameters(), lr=LR)
 
+# Sample index to get the measured value
+Transitions = namedtuple(
+    "Transitions",
+    ("amplitude_input", "peak_indx", "scalar", "scaled_value", "sample_indx"),
+)
+
 
 def select_action(state, step: int):
     # Use eps_threshold to have a good balance between exploration and exploitation
@@ -70,7 +77,6 @@ def optimize_model(current_state, target_state) -> float:
 
     # Warning: Not sure about unsqueeze when only using rewarch_batch
     loss = criterion(current_state, target_state)
-    # print(f"Loss: {loss}")
 
     # Optimize the model
     network.zero_grad()
@@ -118,6 +124,7 @@ def train_loop():
 
     # Number of episodes is determinded from test data input file
     for n_episode, episode in enumerate(data):
+        all_transitions = []
         room = AcousticRoom(episode)
 
         # Get inputs that don't change during current episode
@@ -147,6 +154,7 @@ def train_loop():
                 # Get scalers for the peaks for each speaker
                 scalers = select_action(tensor_input, n_episode)
 
+                transitions = []
                 # Loop over speakers, to multiply peaks with scalers
                 for speaker_indx in range(0, len(speaker_audios)):
                     speaker_scaler = scalers[speaker_indx]
@@ -158,6 +166,15 @@ def train_loop():
                     speaker_audios[speaker_indx][sample_indx][
                         -peak_index
                     ] *= speaker_scaler
+                    transition = Transitions(
+                        amplitude,
+                        peak_index,
+                        speaker_scaler,
+                        speaker_audios[speaker_indx][sample_indx][peak_index],
+                        sample_indx,
+                    )
+                    transitions.append(transition)
+                all_transitions.append(transitions)
 
         # Create 5 streams for the speakers
         streams = [room.get_ifft_audio(stream) for stream in speaker_audios]
@@ -187,25 +204,31 @@ def train_loop():
 
         # Get fft samples from recorded audio
         recorded_fft_samples = room.get_fft_audio(room.recorded_audio)
-
         recorded_amplitudes = np.array(
             [np.array(fft_sample[1]) for fft_sample in recorded_fft_samples]
         )
-        master_amplitudes = np.array(
-            [np.array(fft_sample[1]) for fft_sample in fft_samples]
-        )
 
         all_loss = []
-        for indx in range(0, len(recorded_amplitudes)):
-            recorded_amplitudes_tensor = torch.tensor(
-                recorded_amplitudes[indx], dtype=torch.complex128
-            )
-            master_amplitudes_tensor = torch.tensor(
-                master_amplitudes[indx], dtype=torch.complex128
-            )
-            loss = optimize_model(
-                recorded_amplitudes_tensor, master_amplitudes_tensor
-            ).item()
+        for transitions in all_transitions:
+            NN_outputs = []
+            speaker_targets = []
+            for transition in transitions:
+                measured_amplitude = recorded_amplitudes[transition.sample_indx][
+                    transition.peak_indx
+                ]
+
+                # Reward function
+                reward = transition.scaled_value / measured_amplitude
+                NN_outputs.append(transition.scalar)
+                speaker_targets.append(reward)
+
+            speaker_targets_numpy = np.array(speaker_targets) / 2
+            NN_outputs_numpy = np.array(NN_outputs) / 2
+
+            speaker_target_tensor = torch.tensor(speaker_targets_numpy)
+            NN_outputs_tensor = torch.tensor(NN_outputs_numpy)
+
+            loss = optimize_model(NN_outputs_tensor, speaker_target_tensor).item()
             all_loss.append(loss)
 
         print(f"Episode {n_episode}: done")

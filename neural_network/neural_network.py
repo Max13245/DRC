@@ -88,7 +88,7 @@ def optimize_model(current_state, target_state) -> float:
     return loss
 
 
-def get_train_data(file_path: str) -> list:
+def get_train_data(file_path: str) -> any:
     with open(file_path, mode="r") as file:
         csv_file = csv.reader(file)
         for row in csv_file:
